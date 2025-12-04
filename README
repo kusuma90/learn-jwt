@@ -149,7 +149,20 @@ step2: JwtAuthFilter runs first : doFilterInternal()
  1. As a user i can see products page there i can view only means i cannot add or modify
  2. As a admin access, can modify product info like quantity, price and can add other products. this page only accessible with admin access only.
 
+Testing in postman:
+1. Post -> http://localhost:8080/auth/login
+-> Under request body:
+{ "username": "admin", "password": "1234" }
+click on send: if given credentials are correct, it will generate token like below.
+{
+    "token": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsImlhdCI6MTc2NDg0MDU1OSwiZXhwIjoxNzY0ODQ0MTU5fQ.03TlifZmkREi32osuzZiB9RvO9sKH9UQUK_iK2zYHlk"
+}
 
+2. Check protected url (/profile) it can accessible with valid token only.
+Get -> http://localhost:8080/profile
+-> Under Authorization tab -> select Bearer Token  -> copy and paste generated token there
+-> you will see
+Helloadminthis is your profile!
 
 
 
