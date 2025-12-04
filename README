@@ -1,0 +1,160 @@
+JWT is URL safe token used to securely transmit info b/n parties.
+
+Its is:
+1. Digitally Signed-> Cannot be tampering with.
+2. Stateless -> Sever does not store session data
+3. Self-contained ->  Contains user identity + permissions
+
+Use case:
+Authenticate it with given credentials and generate token
+Authorization: you can access protected apis/urls/services based on the user has an authorization. ex: admin/user
+JWT is stateless that means it won't store state/data in server side.
+
+flow:
+1. User logs in -> server verifies credentials
+2. Server creates a JWT and returns it.
+3. Client stores token (localStorage/cookie).
+4. Client send JWT to every request -> Authorization: Bearer <token>
+5. Server verifies JWT -> if valid -> give access.
+
+jwt has 3 parts separated by 3 dots: header.payload.algorithm
+header.payload.signature
+
+header-> contains metadata about token.
+  {
+   "alg" : "HS256",
+    "typ" : "JWT"
+  }
+
+  Bse64URl-encoded
+
+payload -> contains actual data (claims) very important.
+common claims:
+claim     meanings
+sub      Subject(userID)
+exp:     Expiration time
+iat:     Issued at
+roles:   User roles
+
+ex:
+{
+ "sub" : "user123",
+ "roles" : ["USER"],
+ "iat" : 1710000000,
+ "exp" : 1710003600
+}
+Also Bases64url-encoded.
+
+Signature ->
+{
+  HMACSHA256(
+  base64UrlEncode(header) + "." +base64UrlEncode(payload),secret)
+}
+
+purpose:
+-> Ensures token was not modified
+-> Ensures token came from your server.
+
+JWT advantages:
+* stateless
+* Very fast for authorization
+* Can be shared across services (microservices)
+* Works with any front end (React, Angular mobile).
+
+Note: jwt missunderstanding:
+JWT is only signed, not encrypted. Anyone can read it's data -> just base64 decoded.
+But they cannot modify it.
+If sensitive data must be hidden -> use JWE (Encrypted JWT) or store only minimal claims.
+
+JWT Code implementation:
+we will build:
+1. Login API  -> return JWT
+2. Auth filter -> validated JWT
+3. Protected endpoint -> requires JWT.
+
+Java-Gradle-Springboot
+step1: Add jwt dependencies in build.gradle
+Step2: Add JWT utiity class where we add methods to generate token, validate token and extract user
+In our code check: service.JwtService.java class.
+Step3: add authentication filter class to check jwt token validity, extract user and set up SecurityContextHolder.
+In our code check: security.JwtAuthFilter.java class.
+step3: add configuration -> which url is permitted for example home page, and which urls such protected urls need authentication
+and role based authorization (accees) to urls/apis/services. ex: user level access apis, admin level access apis.
+step4: add login controller, verify credentials and authenticate if username and password available in db and correct
+if not correct credentials -> 401, else will generate token
+step5: add protected api controller. (it can accessbile with valid token only).
+
+JWT Working flow in detailed:
+we will follow the request path for:
+1. Login Request
+2. Protected API request.
+
+1. Login flow:
+When click on login button from UI, request will go to AuthController and loginMethod
+-> It read credentials
+-> Validate user (usually via service)
+-> Call JWT service to generate token
+-> Return token to client.
+from controller --> service  (AuthController -> JwtService).
+1.1 Controller calls JwtService
+call generateToken(username)
+JwtService responsibilities:
+-> Create JWT with claims
+-> Sign with JWT with secret key
+-> Return token string
+1.2 Controller return token : ResponseEntity.ok({token})
+Client stores token in:
+-> localStorage
+-> cookies
+->mobile secure storage
+flow chart:
+[client]
+|username, password
+[AuthController]
+|
+| generateToken(username)
+|
+[JwtService]
+|
+|return token -->
+|
+[AuthController]
+|
+|token
+|
+client
+
+2. Authorized Request flow: (protected ui: ex: /profile)
+Now client sends:
+Get /profile
+Authorization: Bearer <token>
+This request passes through security filter
+step1: Request enters spring security chain
+Every request goes through:
+OncePerRequestFilter -> UsernamePasswordAuthenticationFilter -> ....
+in out code: check JwtAuthFilter.java class : is placed before UsernamePasswordAuthenticationFilter.
+step2: JwtAuthFilter runs first : doFilterInternal()
+ -> extract the authorization header
+ -> If token exists -> validate token
+ -> if valid -> extract username
+ -> create authentication object (auth) in our code.
+ -> set authentication in SecurityContext
+-> This makes spring think:
+  -> user is logged in
+  -> request is authenticated
+
+ Simple example to understand authorization levels:
+ we used to shopping in amazon: lets think about products.
+ authorization roles: user/customer, admin/prodctmanager
+ 1. As a user i can see products page there i can view only means i cannot add or modify
+ 2. As a admin access, can modify product info like quantity, price and can add other products. this page only accessible with admin access only.
+
+
+
+
+
+
+
+
+
+
