@@ -1,7 +1,7 @@
 name: Test SSH Connection
 
 on:
-  workflow_dispatch: # manually trigger from GitHub
+  workflow_dispatch: # manually trigger from Git Hub
 
 jobs:
   test-ssh:
