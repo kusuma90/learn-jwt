@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -25,11 +26,21 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         if(authHeader!=null && authHeader.startsWith("Bearer")){
             String token = authHeader.substring(7);
-            if(jwtService.isTokenValid(token)){
+            /*if(jwtService.isAccessTokenValid(token)){
                 String username = jwtService.extractUsername(token);
                 UsernamePasswordAuthenticationToken auth =
                         new UsernamePasswordAuthenticationToken(username,null, List.of());
                 SecurityContextHolder.getContext().setAuthentication(auth);
+            }*/
+
+            try{
+                String username = jwtService.validAccessToken(token);
+                UsernamePasswordAuthenticationToken auth =
+                        new UsernamePasswordAuthenticationToken(username,null,null);
+            auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                SecurityContextHolder.getContext().setAuthentication(auth);
+            }catch (Exception e){
+                System.out.println("Access Token invalid: "+e.getMessage());
             }
         }
         filterChain.doFilter(request,response);
